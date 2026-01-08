@@ -68,6 +68,34 @@ class CarsDetailUpdateDeleteView(APIView):
         }
         return Response(data)
     
+    
+class CarsListCreateView(APIView):
+    def get(self, request):
+        cars = Cars.objects.all()
+        serializer = CarsSerializer(cars, many=True)
+        data = {
+            'status': status.HTTP_200_OK,
+            'message': 'Maxsulotlar ro`yxati',
+            'products': serializer.data
+        }
+        return Response(data)
+    def post(self, request):
+        serializer = CarsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            data = {
+                'status': status.HTTP_201_CREATED,
+                'message': 'Maxsulot yaratildi',
+                'product': serializer.data
+            }
+            return Response(data)
+        data = {
+            'status': status.HTTP_400_BAD_REQUEST,
+            'message': 'Maxsulot yaratilmadi',
+            'error': serializer.errors
+        }
+        return Response(data)
+    
 
 
 
