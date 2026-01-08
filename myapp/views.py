@@ -1,42 +1,87 @@
+from django.core.serializers import serialize
 from django.shortcuts import render
+from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, RetrieveAPIView,\
 CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Cars
 from .seriallizers import CarsSerializer
 
-# Create your views here.
 
-# class CarsListCreateView(ListCreateAPIView):
-#     queryset = Cars.objects.all()
-#     serializer_class = CarsSerializer
+    
 
-# class CarsRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
-#     queryset = Cars.objects.all()
-#     serializer_class = CarsSerializer
-#     lookup_field = 'pk'
+class CarsDetailUpdateDeleteView(APIView):
+    def get(self, request, pk):
+        car = Cars.objects.filter(pk=pk).first()
+        if car:
+            serializer = CarsSerializer(car)
+            data = {
+                'status': status.HTTP_200_OK,
+                'message': 'Maxsulot',
+                'product': serializer.data
+            }
+            return Response(data)
+        data = {
+            'status': status.HTTP_404_NOT_FOUND,
+            'message': 'Maxsulot topilmadi',
+        }
+        return Response(data)
+    
+    def put(self, request, pk):
+        car = Cars.objects.filter(pk=pk).first()
+        if car:
+            serializer = CarsSerializer(car, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                data = {
+                    'status': status.HTTP_200_OK,
+                    'message': 'Maxsulot yangilandi',
+                    'product': serializer.data
+                }
+                return Response(data)
+            data = {
+                'status': status.HTTP_400_BAD_REQUEST,
+                'message': 'Maxsulot yangilanmadi',
+                'error': serializer.errors
+            }
+            return Response(data)
+        data = {
+            'status': status.HTTP_404_NOT_FOUND,
+            'message': 'Maxsulot topilmadi',
+        }
+        return Response(data)
+    
+    def delete(self, request, pk):
+        car = Cars.objects.filter(pk=pk).first()
+        if car:
+            car.delete()
+            data = {
+                'status': status.HTTP_200_OK,
+                'message': 'Maxsulot ochirildi',
+            }
+            return Response(data)
+        data = {
+            'status': status.HTTP_404_NOT_FOUND,
+            'message': 'Maxsulot topilmadi',
+        }
+        return Response(data)
+    
 
 
 
-class CarsListview(ListAPIView):
-    queryset = Cars.objects.all()
-    serializer_class = CarsSerializer
 
-class CarsCreateView(CreateAPIView):   
-    queryset = Cars.objects.all()
-    serializer_class = CarsSerializer
 
-class CarsRetrieveView(RetrieveAPIView):
-    queryset = Cars.objects.all()
-    serializer_class = CarsSerializer
-    lookup_field = 'pk'
 
-class CarsUpdateView(UpdateAPIView):
-    queryset = Cars.objects.all()
-    serializer_class = CarsSerializer
-    lookup_field = 'pk'
 
-class CarsDestroyView(DestroyAPIView):
-    queryset = Cars.objects.all()
-    serializer_class = CarsSerializer
-    lookup_field = 'pk'
+
+
+
+
+
+
+
+
+
 
