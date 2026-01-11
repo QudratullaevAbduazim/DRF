@@ -1,45 +1,31 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.views import APIView
+# from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Products
 from .serializer import ProductsSerializer
-# Create your views here.
+from rest_framework.generics import GenericAPIView
+from rest_framework.exceptions import ValidationError
+from myapp2 import serializer
 
-class ProductListView(APIView):
+    
+
+
+class ListCreateView(GenericAPIView):
+    serializer_class = ProductsSerializer
+    queryset = Products.objects.all()
+
     def get(self, request):
-        products = Products.objects.all()
-        serializer = ProductsSerializer(products, many=True)
+        serializer = self.get_serializer(self.get_queryset(), many=True)
         data = {
             'status': status.HTTP_200_OK,
-            'message': 'Maxsulotlar royhati',
-            'Soni': len(products),
-            'products': serializer.data
+            'data': serializer.data,
+            'count': len(serializer.data)
         }
         return Response(data)
     
-
-class ProductDetailView(APIView):
-    def get(self, request, pk):
-        product = Products.objects.filter(pk=pk).first()
-        if product:
-            serializer = ProductsSerializer(product)
-            data = {
-                'status': status.HTTP_200_OK,
-                'message': 'Maxsulot',
-                'product': serializer.data
-            }
-            return Response(data)
-        data = {
-            'status': status.HTTP_404_NOT_FOUND,
-            'message': 'Maxsulot topilmadi',
-        }
-        return Response(data)
-    
-
-class ProductCreateView(APIView):
     def post(self, request):
-        serializer = ProductsSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             data = {
@@ -55,11 +41,62 @@ class ProductCreateView(APIView):
         }
         return Response(data)
     
-class ProductUpdate(APIView):
-    def put(self, request, pk):
-        product = Products.objects.filter(pk=pk).first()
+    
+    
+
+
+    
+
+
+class UpdateDeleteDetailView(GenericAPIView):
+    serializer_class = ProductsSerializer
+    queryset = Products.objects.all()
+
+    def get_object(self, pk):
+
+        try:
+            return Products.objects.get(pk=pk)
+        
+        except Products.DoesNotExist:
+            data = {
+                'status': status.HTTP_404_NOT_FOUND,
+                'message': 'Maxsulot topilmadi',
+            }
+            raise ValidationError(data)
+    
+    def get(self, request, pk):
+        product = self.get_object(pk=pk)
+        serializer = self.get_serializer(product)
         if product:
-            serializer = ProductsSerializer(product, data=request.data)
+            serializer = ProductsSerializer(product)
+            data = {
+                'status': status.HTTP_200_OK,
+                'message': 'Maxsulot',
+                'product': serializer.data
+            }
+            return Response(data)
+        
+
+        def delete(self, request, pk):
+            product = self.get_object(pk=pk)
+        if product:
+            product.delete()
+            data = {
+                'status': status.HTTP_200_OK,
+                'message': 'Maxsulot ochirildi',
+            }
+            return Response(data)
+        data = {
+            'status': status.HTTP_404_NOT_FOUND,
+            'message': 'Maxsulot topilmadi',
+        }
+        return Response(data)
+
+
+    def put(self, request, pk):
+        product = self.get_object(pk=pk)
+        if product:
+            serializer = ProductsSerializer(product, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 data = {
@@ -79,15 +116,23 @@ class ProductUpdate(APIView):
             'message': 'Maxsulot topilmadi',
         }
         return Response(data)
-    
-class ProductDeleteView(APIView):
-    def delete(self, request, pk):
-        product = Products.objects.filter(pk=pk).first()
+
+    def patch(self, request, pk):
+        product = self.get_object(pk=pk)
         if product:
-            product.delete()
+            serializer = ProductsSerializer(product, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                data = {
+                    'status': status.HTTP_200_OK,
+                    'message': 'Maxsulot yangilandi',
+                    'product': serializer.data
+                }
+                return Response(data)
             data = {
-                'status': status.HTTP_200_OK,
-                'message': 'Maxsulot ochirildi',
+                'status': status.HTTP_400_BAD_REQUEST,
+                'message': 'Maxsulot yangilanmadi',
+                'error': serializer.errors
             }
             return Response(data)
         data = {
@@ -95,5 +140,3 @@ class ProductDeleteView(APIView):
             'message': 'Maxsulot topilmadi',
         }
         return Response(data)
-    
-
