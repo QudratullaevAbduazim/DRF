@@ -1,8 +1,8 @@
 # myapp2/serializers.py
 from rest_framework import serializers
-from .models import Product
+from .models import Products
 
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Product
+        model = Products
         fields = '__all__'  
